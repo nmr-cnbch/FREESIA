@@ -330,7 +330,7 @@ class CrossSection(Data2D):
         #if str(spectrum_file_path).endswith("ucsf"):
         if spectrum_format == "ucsf":
             create_cs_func = cls.create_from_ucsf
-        elif spectrum_format == "spectrum_real:
+        elif spectrum_format == "spectrum_real":
             create_cs_func = cls.create_from_spectrum_real
         else:
             raise ValueError(f"{spectrum_format} is an unknown spectrum format")
