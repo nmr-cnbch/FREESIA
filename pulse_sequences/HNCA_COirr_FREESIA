@@ -1,0 +1,689 @@
+;avance-version (12/01/11)
+;HNCA_COdec_dqCA_TROSYbruker4r
+
+;includes elements (like TROSY part) from Bruker's 'trhncacogp2h3d' pulse program
+
+;on/off resonance Ca, C=O pulses using shaped pulses: call getprosol
+;CA evolution: constant time or semi-constant time (mode chosen automatically based on tmax1)
+;N evolution: constant time or semi-constant time (mode chosen automatically based on tmax2; currently locked to constant time only) 
+;phase sensitive using Echo/Antiecho gradient selection (T2)
+
+;M. Salzmann, G. Wider, K. Pervushin, H. Senn & K. Wuethrich,
+;   J. Am. Chem. Soc. 121, 844-848 (1999)
+
+;$CLASS=HighRes
+;$DIM=3D
+;$TYPE=
+;$SUBTYPE=
+;$COMMENT=
+
+
+; zgoptns:
+; -DnoCOdec: removes CO decoupling
+; -DTROSY: enables Nietlispach TROSY
+; -DLABEL_D: uses deuterium decoupling while there is transverse CA magnetization; otherwise 1H decoupling is applied
+
+prosol relations=<triple>
+
+#include <Avance.incl>
+#include <Grad.incl>
+#include <CCR_Params.incl>
+
+
+; ***** Delays: *****
+"in1 = inf1"
+define delay T1
+"T1 = 0"
+define delay tmax1
+"tmax1 = td1*in1/2"
+
+"in2 = inf2"
+define delay T2
+"T2 = 0"
+define delay tmax2
+"tmax2 = td2*in2/2"
+
+"p16=1m"
+"p2=p1*2"
+"p22=p21*2"
+"d11=30m"
+"d12=20u"
+"d16=200u"
+"d13=4u"
+
+define delay DELTA_DE
+"DELTA_DE = de"
+
+; *** Scalar coupling evolution durations ***
+;d25: time for N->NHz and H->HNz evolution [5.4 msec]
+;define delay timeNH
+;"d25=5.4m"
+"d25=4.6m"
+"timeNH = d25"
+;define delay timeHN
+"timeHN = timeNH"
+
+;define delay timeNCO
+"d24=31m"
+"timeNCO = d24"
+
+;d27: time for N->CAzN evolution [28 msec]
+;define delay timeNCA
+"d27=28m"   	 
+"timeNCA = d27"
+
+;d22: time for CA->CACOz evolution [6 msec]
+;define delay timeCACO
+;"d22=6.0m"
+"d22=9.5m"  
+"timeCACO = d22"
+
+define delay T1ct
+"d38=28.6m" ; correct value
+;"d38 = 22m" ; values for testing
+"T1ct = d38 - p14*2" ;for optimal prevention of CA->CB coupling evolution 
+
+;"d40=5.4m" ;originally tested value - works alright
+"d40=9.5m"
+define delay timeCACOopt
+"timeCACOopt = d40"
+;"timeCACOopt = d22"
+
+; *** First INEPT Hz(i) -> Hz(i)Nz(i) ***
+define delay DELTA11
+"DELTA11 = timeHN/2 - p16 - d16"
+define delay DELTA11_b
+"DELTA11_b = timeHN/2 - p16 - d16 - p11"
+
+
+; *** Second INEPT Hz(i)Nz(i) -> CAz(i-1)Hz(i)Nz(i) + Hz(i)Nz(i)CAz(i) ***
+define delay DELTA21
+"DELTA21 = timeNH"
+define delay DELTA22
+"DELTA22 = timeNCA/2 - DELTA21 - p1 - d13*2"	; Compensated for H 90 pulse.
+define delay DELTA22_t
+"DELTA22_t = timeNCA/2 - DELTA21"
+define delay DELTA23
+"DELTA23 = timeNCA/2"
+
+
+; *** INEPT CAzCOz -> CAz ***
+define delay DELTA31
+"DELTA31 = timeCACO/2"
+define delay DELTA32
+"DELTA32 = T1ct/2 - timeCACO/2"
+define delay DELTA33
+"DELTA33 = T1ct/2"
+
+
+; *** CO decoupling duration ***
+define delay DELTA_dec
+"DELTA_dec=d60"
+
+
+
+; *** TROSY / N evolution ***
+; For N -> H Nietlispach TROSY the H2O selective pulse can be concatenated into the preceding INEPT.
+
+;define delay timeNandH  ; Used in the first echo of COS-INEPT.
+"timeNandH = timeNH"
+define delay DELTANandH
+"DELTANandH = timeNandH/2 - p16 - d16"
+
+define delay DELTAHN2
+define delay DELTAHN
+"DELTAHN2 = timeHN/2 - p16 - d16"
+"DELTAHN = DELTAHN2 - p11"
+
+define delay DELTAHN_t
+;"DELTAHN_t = DELTAHN2 - p11 + de"
+"DELTAHN_t = DELTAHN2 - p11"
+define delay DELTANandH2
+"DELTANandH2 = DELTANandH - p3"
+
+define delay DELTAHN2_t
+"DELTAHN2_t = DELTAHN2 - p11"
+
+
+define delay NCOMP  ; Length of N 90 degree pulse.
+define delay NHCOMP ; Time between the ends of centered N and H 90 deg pulses.
+define delay H2OCOMP    ; Time between the ends of H2O pulse and N pulse.
+define delay ECHOTIME_t
+define delay DELTAHN1
+"NCOMP = p21"
+"NHCOMP = (p21 - p1)/2"
+"H2OCOMP = p11 - NHCOMP"
+"ECHOTIME_t = p16 + d16 + de - p1*2/PI - NHCOMP"   ; Compensated for de and last pulse.
+"DELTAHN1 = timeHN/2 - p16 - d16 - p21"
+
+define delay ECHOCOMP
+"ECHOCOMP = p21*4/PI"
+
+define delay ECHOTIME
+"ECHOTIME = p16 + d16 + de - p1*2/PI"   ; Compensated for de and last pulse.
+
+# ifdef LABEL_D
+  "d0 -= 30m + 6m + 50u + 30m"
+# endif /*LABEL_D*/
+
+
+; ***** Run-time-calculated delays: *****
+define delay T1aN
+define delay T1aCO
+define delay T1b
+define delay T1c
+
+define delay T2aCO_t
+define delay T2bNCA_t
+define delay T2c_t
+
+define delay T2aCA
+define delay T2aGRAD
+define delay T2aCO
+define delay T2b
+define delay T2c
+
+define delay maxtmax1
+"maxtmax1 = T1ct"
+define delay maxtmax2
+"maxtmax2 = timeNCA - p11*2 + p21*8/3.1416"
+
+
+
+; ***** Shaped pulses: *****
+"spoff2=0"
+"spoff3=0"
+"spoff5=bf2*((cnst21-cnst22)/1000000)" ; CA with offset on CO.
+"spoff7=bf2*((cnst22-cnst21)/1000000)" ; CO with offset on CA.
+"spoff8=0"
+"spoff9=0"
+;For Shaka:
+"spoff4 = bf2*((cnst21 - cnst23)/1000000)"  ; CA with offset on CA/CO middle.
+"spoff6 = spoff4"
+
+
+
+; ***** Shaka6 composite pulse: *****
+;define pulse shaka1
+;define pulse shaka2
+;define pulse shaka3
+;define pulse shaka4
+;define pulse shaka5
+;define pulse shaka6
+
+"shaka1 = p3*158.0/90"
+"shaka2 = p3*171.2/90"
+"shaka3 = p3*342.8/90"
+"shaka4 = p3*145.5/90"
+"shaka5 = p3*81.2/90"
+"shaka6 = p3*85.3/90"
+
+
+
+; ***** Other parameters: *****
+"l0=1"
+define list<frequency> CO_list=<$FQ1LIST>
+"cnst23 = (cnst21+cnst22)/2"
+
+
+"acqt0 = 0"
+baseopt_echo
+
+
+
+; ***** Beginning of the pulse sequence *****
+1 d11 ze
+# ifdef LABEL_D
+    d11 LOCKDEC_ON  ; Enable D decoupling.
+    50u LOCKH_ON  ; Hold lock.
+    d11 H2_PULSE  ; Switch D to pulse mode.
+    d11 pl17:f4  ; NEW
+# endif /*LABEL_D*/
+
+2 d11  ; Start of loop.
+
+
+; ***** Run-time calculations: *****
+"T1aN = T1/2"
+"T1aCO = timeCACO/2 - p22"
+"T1b = T1ct/2 - timeCACO/2"
+"T1c = T1ct/2 - T1/2"
+;"if (tmax1 <= timeCACOopt) {T1b = 0;} else {T1b = T1*(1-timeCACOopt/tmax1)/2;}"
+;"if (tmax1 <= timeCACOopt) {T1c = (timeCACOopt - T1)/2;} else {T1c = timeCACOopt*(1-T1/tmax1)/2;}"
+
+; with TROSY:
+"T2aCO_t = T2/2"
+"T2bNCA_t = timeNCA/2 - p14"
+"T2c_t = timeNCA/2 - T2/2 - p11 + p21*4/3.1416"
+
+; without TROSY:
+"T2aCO = T2/2"
+"T2aCA = timeNCA/2 - p14"
+"if (T2aCA < (p16+d16)) {T2aGRAD = T2aCA + p14;} else {T2aGRAD = 0;}"
+"if (tmax2 <= timeNCA) {T2b = 0;} else {T2b = T2*(1 - timeNCA/tmax2)/2;}"
+"if (tmax2 <= timeNCA) {T2c = (timeNCA - T2)/2 + p14;} else {T2c = timeNCA*(1 - T2/tmax2)/2 + p14;}"
+
+if "tmax1 >= maxtmax1" goto 999
+if "tmax2 >= maxtmax2" goto 999
+; ***** End of run-time calculations *****
+
+
+
+;  (p22 ph0 pl3):f3 ;optional pulse to keep N on z 
+    
+# ifdef LABEL_D
+    d11 H2_LOCK   ; Switching D to lock mode.
+    9m LOCKH_OFF ; Sample lock.
+    d1 fq=cnst23(bf ppm):f2 ; f2 to CA/CO middle
+    d13 UNBLKGRAD   ; Unblank gradient amplifier and hold lock.
+    d12 H2_PULSE
+# else
+    d1 fq=cnst23(bf ppm):f2 ; f2 to CA/CO middle
+    d13 UNBLKGRAD
+# endif /*LABEL_D*/
+
+
+; ***** Crush non-proton polarization: *****
+	(p3 ph0 pl2):f2
+# ifndef TROSY
+	(p21 ph0 pl3):f3    ; not crushing N polarization increases the signal
+# endif /*TROSY*/
+	p16:gp0
+	d16
+
+	(p3 ph1 pl2):f2
+# ifndef TROSY
+	(p21 ph1 pl3):f3    ; not crushing N polarization increases the signal
+# endif /*TROSY*/
+	p16:gp0
+	d16 fq=cnst21(bf ppm):f2	; Switch f2 to CA
+
+    
+; ***** Hz(i) -> Hz(i)Nz(i): *****
+	(p1 ph0 pl1):f1
+    (p11:sp1 ph2):f1
+	;DELTA11
+	p16:gp10
+	d16
+    DELTA11_b
+	(center (p2 ph1 pl1):f1 (p22 ph0 pl3):f3) 
+	;DELTA11
+    DELTA11_b
+	p16:gp10
+	d16
+    (p11:sp1 ph3):f1
+	(p1 ph3 pl1):f1     
+
+; ***** Hz(i)Nz(i) -> CAz(i-1)Nz(i) + Nz(i)CAz(i): *****
+	(p21 ph0 pl3):f3
+	DELTA21
+# ifdef TROSY
+	DELTA22_t
+# else
+	(p1 ph1 pl1):f1
+	(d13 pl19):f1
+	(d13 cpds1 ph0):f1
+	DELTA22
+# endif /*TROSY*/
+	(center (p14:sp3 ph0):f2 (p22 ph0 pl3):f3) ;f2 - CA on resonance
+	DELTA23
+    (p21 ph1 pl3):f3
+
+
+; ***** Decoupler OFF/ON and gradient: *****
+# ifndef TROSY
+	d13 do:f1
+	(p1 ph3 pl1):f1
+# endif /*TROSY*/
+	p16:gp2
+	d16
+
+
+; ***** CAz(i-1)Nz(i) + Nz(i)CAz(i) -> CAz(i-1)COz(i-1)Nz(i) + Nz(i)CAz(i)COz(i) with CA evolution (T1): *****
+# ifdef LABEL_D
+    20u cpd4:f4
+# else
+#   ifndef TROSY
+	  (p1 ph1 pl1):f1
+	  (d13 pl19):f1
+	  (d13 cpds1 ph0):f1
+#   endif /*TROSY*/
+# endif /*LABEL_D*/
+
+    (p13:sp2 ph11):f2    ; CA on resonance
+    T1aN
+    (p22 ph0 pl3):f3
+    T1aCO
+    (p14:sp7 ph0):f2     ; CO off resonance
+    T1b
+    (p14:sp3 ph0):f2     ; CA on resonance
+    T1c
+    (p14:sp7 ph0):f2     ; CO off resonance
+    (p13:sp8 ph1):f2     ; CA on resonance
+
+
+; ***** Decoupler OFF/ON: *****
+
+# ifdef LABEL_D
+    4u do:f4
+# else
+#   ifndef TROSY
+	  d13 do:f1
+	  (p1 ph3 pl1):f1
+#   endif /*TROSY*/
+# endif /*LABEL_D*/
+
+
+; ***** CO decoupling and gradient: *****
+# ifndef noCOdec
+    d13 CO_list:f2
+    d13 pl60:f2 ;pl2:f2
+    d13 cw:f2
+    DELTA_dec
+    d13 do:f2
+    d13 fq=cnst21(bf ppm):f2
+    d13 pl2:f2
+# else
+    d13
+    d13
+    d13
+    DELTA_dec
+    d13
+    d13 fq=cnst21(bf ppm):f2
+    d13 pl2:f2
+# endif /*noCOdec*/
+
+	p16:gp3
+	d16
+
+
+; ***** CAz(i-1)COz(i-1)Nz(i) + Nz(i)CAz(i)COz(i) -> CAz(i-1)Nz(i) + Nz(i)CAz(i): *****
+# ifdef LABEL_D
+    20u cpd4:f4
+# else
+#   ifndef TROSY
+	  (p1 ph1 pl1):f1
+	  (d13 pl19):f1
+	  (d13 cpds1 ph0):f1
+#   endif /*TROSY*/
+# endif /*LABEL_D*/
+
+    (p13:sp2 ph0):f2    ; CA on resonance
+    DELTA31
+    (p14:sp7 ph0):f2     ; CO off resonance
+    DELTA32
+    (p14:sp3 ph0):f2     ; CA on resonance
+    DELTA33
+    (p14:sp7 ph0):f2     ; CO off resonance
+    (p13:sp8 ph1):f2     ; CA on resonance
+
+
+    ;(p13:sp2 ph0):f2     ; CA on resonance
+    ;(p13:sp4 ph0):f2 ; CA_90_ofCACO
+    ;timeCACOopt*0.5
+        ;(shaka1 pl2 ph0):f2 
+        ;(shaka2 pl2 ph2):f2
+        ;(shaka3 pl2 ph0):f2
+        ;(shaka4 pl2 ph2):f2
+        ;(shaka5 pl2 ph0):f2
+        ;(shaka6 pl2 ph2):f2
+    ;timeCACOopt*0.5
+    ;(p13:sp6 ph1):f2
+    ;(p13:sp8 ph1):f2     ; CA on resonance
+
+; ***** Decoupler OFF/ON: *****
+
+# ifdef LABEL_D
+    4u do:f4
+# else
+#   ifndef TROSY
+	  d13 do:f1
+	  (p1 ph3 pl1):f1
+#   endif /*TROSY*/
+# endif /*LABEL_D*/
+
+;d13 fq=cnst21(bf ppm):f2
+
+
+; ***** CAz(i-1)Nz(i) + Nz(i)CAz(i) -> Hz(i)Nz(i) + Hz(i)Nz(i) with N evolution (T2): *****
+; COS-INEPT or TROSY:
+# ifdef TROSY
+    if "l0 %2 == 1"
+        {
+        (p21 ph7 pl3):f3
+        }
+    else
+        {
+        (p21 ph8 pl3):f3
+        }
+    
+    T2aCO_t
+    (p14:sp7 ph0):f2     ; CO off resonance
+    T2bNCA_t
+    (center (p14:sp3 ph0):f2 (p22 ph0 pl3):f3)     ; f2 - CO on resonance
+    T2c_t
+    DELTA_DE
+    (p11:sp1 ph0):f1
+
+    (p1 ph9 pl1):f1
+    ;(p3 ph0 pl2):f2 ; CA antiphase purge.
+    p16:gp11
+    d16
+    ;DELTANandH2
+    DELTANandH
+    (center (p2 ph0 pl1):f1 (p22 ph0 pl3):f3)
+    DELTANandH
+    p16:gp11
+    d16
+    (p1 ph0 pl1):f1
+    DELTA_DE  ; tu wÅaÅciwie powinno byÄ de-p1*2/PI - bÅÄd fazowy rzÄdu 0.6 stopni
+    (p21 ph9 pl3):f3
+    p16:gp12
+    d16
+    DELTAHN_t
+    (p11:sp1 ph2):f1
+    (center (p2 ph0 pl1):f1 (p22 ph0 pl3):f3)
+    (p11:sp1 ph2):f1
+    ;DELTAHN_t
+    DELTAHN2_t
+    p16:gp12
+# ifdef LABEL_D
+    d16 pl16:f3 BLKGRAMP  ; Set power for decoupling, blank gradient amplifier and sample lock.
+# else
+    d16 pl16:f3 BLKGRAD  ; Set power for decoupling, blank gradient amplifier and sample lock.
+# endif /*LABEL_D*/
+    (p21 ph0 pl3):f3
+
+
+# else
+	(p1 ph1 pl1):f1
+	(d13 pl19):f1
+	(d13 cpds1 ph0):f1
+
+	(p21 ph21 pl3):f3
+	T2c
+	(p22 ph0 pl3):f3
+	T2b
+	(ralign
+        (d13 do p1 ph3 pl1 timeNH):f1
+        (p14:sp3 ph0 T2aCA p14:sp7 ph0 T2aCO):f2 ;sp3 - CA on res; sp7 - CO off res
+        (p16:gp21*EA d16 T2aGRAD):f3
+	)
+	(p21 ph0 pl3):f3
+	ECHOCOMP
+	(p1 ph0 pl1):f1
+	p16:gp11
+	d16
+	DELTANandH
+	(center (p2 ph2 pl1):f1 (p22 ph0 pl3):f3)
+	DELTANandH
+	p16:gp11
+	d16
+    
+	(p1 ph1 pl1):f1
+	(p21 ph13 pl3):f3   ; E/A selecting pulse.
+	p16:gp12
+	d16
+	DELTAHN1
+	(center (p2 ph0 pl1):f1 (p22 ph0 pl3):f3)
+	DELTAHN2
+	p16:gp12
+	d16
+
+	(p1 ph0 pl1):f1
+	ECHOTIME
+	(p2 ph2 pl1):f1
+	p16:gp22	; Coherence selection gradient.
+# ifdef LABEL_D
+    d16 pl16:f3 BLKGRAMP  ; Set power for decoupling, blank gradient amplifier and sample lock.
+# else
+    d16 pl16:f3 BLKGRAD  ; Set power for decoupling, blank gradient amplifier and sample lock.
+# endif /*LABEL_D*/
+# endif /*TROSY*/
+    
+
+
+
+; ***** Acquisition: *****
+# ifdef TROSY
+    go=2 ph31
+# else
+    go=2 ph31 cpd3:f3 finally do:f3
+# endif /*TROSY*/
+
+    d11 mc #0 to 2
+
+    F1PH(calph(ph11,+90), caldel(T1, +in1))
+# ifdef noCOdec
+    F2EA(calph(ph13,+180) & calgrad(EA), caldel(T2, +in2) & calph(ph21, +180) & calph(ph31, +180))
+# else
+    F2EA(calph(ph9,+180) & calclc(l0, 1), caldel(T2, +in2) & calclist(CO_list, 1))
+# endif /*noCOdec*/
+
+# ifdef LABEL_D
+    d11 H2_LOCK
+    d11 LOCKH_OFF    
+    d11 LOCKDEC_OFF
+# endif /*LABEL_D*/
+
+999 exit
+
+
+
+; ***** Constant phases: *****
+ph0 = 0
+ph1 = 1
+ph2 = 2
+ph3 = 3
+
+; ***** Phases incremented for indirect dimensions: *****
+;ph11 = 0 0 1 1
+ph11 = 0 0 0 0 2 2 2 2
+
+ph13 = 3
+
+
+;ph7=0 1
+;ph8=0 3
+
+ph7 = 3 1 2 0
+ph8 = 3 1 0 2
+
+
+;ph9=1
+ph9 = 3
+
+; Phase at start of INEPT before COS-INEPT - for TPPI shifting in T3:
+ph21 = 0 0 2 2
+;ph21 = 1 1 3 3
+
+; ***** Receiver phase: *****
+;ph31=1 2 3 0
+ph31 = 1 3 2 0 3 1 0 2
+
+
+;WARNING! Some of the things below may be incorrect/outdated or simply irrelevant for this pulse program.
+;p1: f1 channel -  90 degree high power pulse
+;p2: f1 channel - 180 degree high power pulse
+;p3: f2 channel -  90 degree high power pulse
+;p4: f2 channel - 180 degree high power pulse
+;p11: f1 channel -  90 degree shaped pulse (water flipback)
+;p13: f2 channel -  90 Q5 Cali/CO
+;p14: f2 channel - 180 Q3 Cali/CO
+;p41: f1 channel - 90 degree eburp and inverse eburp pulse (HN selective)
+;p42: f1 channel - 180 degree reburp pulse (HA selective)
+
+;p16: homospoil/gradient pulse  [1 msec]
+
+;p21: f3 channel -  90 degree high power pulse
+;p22: f3 channel - 180 degree high power pulse
+
+;p53: f4 channel - 90 degree high power pulse
+
+;pl1: power for 1H  pulses
+;pl2: power for 13C pulses
+;pl3: power for 15N pulses
+;pl4: power for 2H pulses
+;pl60: power for CO decoupling
+
+;cpd1: decoupling according to sequence defined by cpdprg1, DIPSI2
+;cpd2: decoupling according to sequence defined by cpdprg2, waltz16
+;cpd4: decoupling according to sequence defined by cpdprg4, waltz16
+
+;d1: relaxation delay	[1.2 sec]
+;d11: delay for disk I/O	[30 msec]
+;d13: short delay  [4 usec]
+;d16: delay for homospoil/gradient recovery [200 usec]
+
+;cnst21: CA offset in ppm [56]
+;cnst22: CO offset in ppm [176]
+;cnst24: CO decoupling offset in ppm [calculated in run-time]
+;cnst25: CO spectral width in ppm [15]
+;cnst19: HA offset in ppm [4.3]
+;cnst18: HA bandwidth in ppm [3.0]
+
+;gpnam0: SMSQ10.100
+;gpnam1: SMSQ10.100
+;gpnam2: SMSQ10.100
+;gpnam3: SMSQ10.100
+;gpnam4: SMSQ10.100
+;gpnam5: SMSQ10.100
+;gpnam6: SMSQ10.100
+;gpnam10: SMSQ10.100
+;gpnam11: SMSQ10.100
+;gpnam12: SMSQ10.100
+;gpnam21: SMSQ10.100
+;gpnam22: SMSQ10.100
+
+;gpz0: N and CO homospoil gradient
+;gpz1: Homospoil gradient after H.
+;gpz2: Homospoil gradient after N.
+;gpz3: Homospoil gradient after CO.
+;gpz4: Homospoil gradient after CA.
+;gpz7: Homospoil gradient after N.
+;gpz6: Pair of gradients during CCR.
+;gpz8: Homospoil gradient after CCR.
+;gpz9: Homospoil gradient after N.
+;gpz10: Homospoil gradient after CA.
+;gpz5: Homospoil gradient after CO.
+
+;gpz11: Gradient in first COS-INEPT echo - 5%.
+;gpz12: Gradient in second COS-INEPT echo - -2%.
+
+;gpz21: First coherence selection gradient (on N) - 80%.
+;gpz22: Second coherence selection gradient (on H) - 8.1%.
+
+;sp1: f1 channel - shaped pulse  90 degree  (H2O on resonance)
+;sp2: f2 channel, 90 Q5 Cali/CO on resonance.
+;sp3: f2 channel, 180 Q3 Cali/CO on resonance.
+;sp4: f2 channel, 90 Q5 Cali/CO off resonance.
+;sp5: f2 channel, 180 Q3 Cali with offset on CO.
+;sp6: f2 channel, 90 Q5 Cali/CO off resonance time reversed.
+;sp7: f2 channel, 180 Q3 CO with offset on CA.
+;sp8: f2 channel, 90 Q5 Cali/CO on resonance time reversed.
+;sp26:wvm: reburp(cnst18 ppm, cnst19 ppm)
+
+
+
+
+
