@@ -168,19 +168,19 @@ def select_weighting_function_from_str(
     #param, function = find_float_in_string_ending(weighting_function_str)
     param, function = find_float_inside_brackets(weighting_function_str)
     #print(param, function)
-    if function == "cos":
+    if function == "c":
         weighting_function = Cos_To_Nth_Power(param, endpoint)
-    elif function == "1sin":
+    elif function == "s":
         weighting_function = One_Minus_Sine_To_Nth_Power(param, endpoint)
-    elif function == "gauss":
+    elif function == "g":
         if not param: param = 5
         sigma = (endpoint/2)/param
         weighting_function = Gauss(sigma)
-    elif function == "exp":
+    elif function == "e":
         if not param: param = 50
         weighting_function = Exp(param)
     else:
-        raise ValueError("Wrong function")
+        raise ValueError(f"{function} is an unknown weighting function")
     return weighting_function, param
 
 
