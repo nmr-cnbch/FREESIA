@@ -1,0 +1,17 @@
+[project]
+name = "freesia"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "argparse>=1.4.0",
+    "jinja2>=3.1.6",
+    "logging>=0.4.9.6",
+    "matplotlib>=3.10.9",
+    "numpy>=2.4.4",
+    "pandas>=3.0.2",
+    "scipy>=1.17.1",
+    "typing>=3.10.0.0",
+]
+
