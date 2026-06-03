@@ -302,30 +302,38 @@ class CrossSection(Data2D):
         cs_dim: int,
         slicing_point_coords: list[int],
         name: str = None,
+        spectrum_format: str = "ucsf",
         ) -> CrossSection:
         """
         Create cross section of NMR spectrum from a spectrum file.  
 
         Required arguments:
-            ucsf_file_path (os.PathLike): 
-                Path of the ucsf file.
-            spectrum (Spectrum): Object of the 'UCSF_Spectrum' class 
-                containing information about the measured spectrum, 
-                especially its params.
+            spectrum_file_path (os.PathLike): 
+                Path of the spectrum file.
+            spectrum (Spectrum): Object of the 'UCSF_Spectrum' 
+                or 'Spectrum' class containing information about 
+                the measured spectrum, especially its params.
             cs_dim (int): Number of the dimension along which 
                 the spectrum is sliced to obtain the cross section.
             slicing_point_coords (list[int]): Slicing point coordinates.
+
+        Optional arguments:
             name (str): Name of the cross section or of the peak 
-                through which the spectrum was sliced.
+                through which the spectrum was sliced. Defaults to None.
+            spectrum_format (str): Format of the spectrum file, either
+                "ucsf" or "spectrum_real". Defaults to "ucsf".
         
         Returns:
             CrossSection_obj (CrossSection): New instance of the
                 CrossSection class.
         """
-        if str(spectrum_file_path).endswith("ucsf"):
+        #if str(spectrum_file_path).endswith("ucsf"):
+        if spectrum_format == "ucsf":
             create_cs_func = cls.create_from_ucsf
-        else:
+        elif spectrum_format == "spectrum_real:
             create_cs_func = cls.create_from_spectrum_real
+        else:
+            raise ValueError(f"{spectrum_format} is an unknown spectrum format")
         CrossSection_obj = create_cs_func(spectrum_file_path, spectrum,
             cs_dim, slicing_point_coords, name, 
         )
