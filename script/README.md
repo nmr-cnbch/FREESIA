@@ -51,13 +51,13 @@ The output directory contains one subdirectory for cross-sections before any pro
 * Optional: text files with intensities of each point in the cross-sections and/or profiles, according to the use of `--text` argument.
 
 ## Test data
-Directory `MBP_input` contains the input files for the script from the H<ins>N</ins>CA(COirr) experiment performed on MBP sample, as reported in the original publication.<!--(add reference to the published paper here)--> After downloading the folder, pass it as the input directory for the script. Use `2` as the number of accordion dimension (corresponds to 15N dimension).
+Directory `MBP_input` contains the input files for the script from the H<ins>N</ins>CA(COirr) experiment performed on MBP sample, as reported in the original publication.<!--(add reference to the published paper here)--> Due to GitHub file size limitations, the required ucsf spectra have to be downloaded from the repository [Dane Badawcze UW](https://doi.org/10.58132/5X0W5D) (directory: `MBP_HNCA_COirr_FREESIA/ucsf_spectra`) and added to the `MBP_input`. Once all files are in place, pass `MBP_input` as the input directory for the script. Use `2` as the number of accordion dimension (corresponds to 15N dimension). You can use the following command after replacing `input_dir` and `output_dir` with paths to the input and output directories on your computer: `uv run freesia.py 2 input_dir output_dir -spectrum ucsf_not_weighted_along_Ndim -fws ucsf_weighted_along_Ndim`.
 
 ## Citation
 Please cite: ...
 
 ## Problems or questions?
-If you encounter issues or have questions, we recommend writing an email: <!--`<insert email address here>`-->.
+If you encounter issues or have questions, we recommend writing an email: anzaw@chem.uw.edu.pl
 
-## References
-<!--\[1\] Insert our article (and supporting information? here --> 
+<!--\## References
+[1\] Insert our article (and supporting information? here --> 
